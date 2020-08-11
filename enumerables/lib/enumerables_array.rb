@@ -4,6 +4,7 @@
 # factors of a given number.
 
 def factors(num)
+  (1..num).to_a.select { |i| num % i == 0 }
 end
 
 # ### Bubble Sort
@@ -47,9 +48,25 @@ end
 
 class Array
   def bubble_sort!(&prc)
+    prc ||= Proc.new { |a, b| a <=> b }
+    n = self.length
+    loop do
+      sorted = true
+      (0...n - 1).each do |i|
+        if prc.call(self[i], self[i + 1]) == 1
+          self[i], self[i + 1] = self[i + 1], self[i]
+          sorted = false
+        end
+      end
+      n -= 1
+      break if sorted
+    end
+    self
   end
 
   def bubble_sort(&prc)
+    arr = self.dup
+    arr.bubble_sort!(&prc)
   end
 end
 
@@ -66,10 +83,18 @@ end
 # `subwords` will accept both a string and a dictionary (an array of
 # words).
 
-def substrings(string)
+def substrings(str)
+  arr = []
+  (0...str.length).each do |i|
+    (i...str.length).each do |j|
+      arr << str[i..j]
+    end
+  end
+  arr
 end
 
 def subwords(word, dictionary)
+  substrings(word).select { |str| dictionary.include?(str) }.uniq
 end
 
 # ### Doubler
@@ -77,6 +102,7 @@ end
 # array with the original elements multiplied by two.
 
 def doubler(array)
+  array.map { |n| n * 2 }
 end
 
 # ### My Each
@@ -104,6 +130,12 @@ end
 
 class Array
   def my_each(&prc)
+    i = 0
+    while i < self.length
+      prc.call(self[i])
+      i += 1
+    end
+    self
   end
 end
 
@@ -122,12 +154,28 @@ end
 
 class Array
   def my_map(&prc)
+    new_arr = []
+    self.my_each do |ele|
+      new_arr << prc.call(ele)
+    end
+    new_arr
   end
 
   def my_select(&prc)
+    new_arr = []
+    self.my_each do |ele|
+      new_arr << ele if prc.call(ele)
+    end
+    new_arr
   end
 
   def my_inject(&blk)
+    memo, i = 0, 0
+    while i < self.length
+      memo = (i == 0)? self[i] : blk.call(memo, self[i])
+      i += 1
+    end
+    memo
   end
 end
 
@@ -141,4 +189,5 @@ end
 # ```
 
 def concatenate(strings)
+  strings.inject(:+)
 end
