@@ -2,7 +2,12 @@ class Array
 
   # Calls the block on every element of the array and returns the original array
   def my_each(&prc)
-
+    i = 0
+    while i < self.length
+      prc.call(self[i])
+      i += 1
+    end
+    self
   end
 
   # # calls my_each twice on the array, printing all the numbers twice.
@@ -11,47 +16,61 @@ class Array
   # end.my_each do |num|
   #   puts num
   # end
-  # # => 1
-  #     2
-  #     3
-  #     1
-  #     2
-  #     3
+  # # # => 1
+  # #     2
+  # #     3
+  # #     1
+  # #     2
+  # #     3
   # p return_value  # => [1, 2, 3]
 
   # Returns a new array containing only elements that satisfy the block
   def my_select(&prc)
-
+    new_arr = []
+    self.my_each do |ele|
+      new_arr << ele if prc.call(ele)
+    end
+    new_arr
   end
 
   # a = [1, 2, 3]
-  # a.my_select { |num| num > 1 } # => [2, 3]
-  # a.my_select { |num| num == 4 } # => []
+  # p a.my_select { |num| num > 1 } # => [2, 3]
+  # p a.my_select { |num| num == 4 } # => []
 
   # Returns a new array excluding elements that satisfy the block
   def my_reject(&prc)
-
+    new_arr = []
+    self.my_each do |ele|
+      new_arr << ele if !prc.call(ele)
+    end
+    new_arr
   end
 
   # a = [1, 2, 3]
-  # a.my_reject { |num| num > 1 } # => [1]
-  # a.my_reject { |num| num == 4 } # => [1, 2, 3]
+  # p a.my_reject { |num| num > 1 } # => [1]
+  # p a.my_reject { |num| num == 4 } # => [1, 2, 3]
 
   # Returns true if any elements of the array satisfy the block
   def my_any?(&prc)
-
+    self.my_each do |ele|
+      return true if prc.call(ele)
+    end
+    false
   end
 
   # Returns true if all elements satisfy the block
   def my_all?(&prc)
-
+    self.my_each do |ele|
+      return false if !prc.call(ele)
+    end
+    true
   end
 
   # a = [1, 2, 3]
-  # a.my_any? { |num| num > 1 } # => true
-  # a.my_any? { |num| num == 4 } # => false
-  # a.my_all? { |num| num > 1 } # => false
-  # a.my_all? { |num| num < 4 } # => true
+  # p a.my_any? { |num| num > 1 } # => true
+  # p a.my_any? { |num| num == 4 } # => false
+  # p a.my_all? { |num| num > 1 } # => false
+  # p a.my_all? { |num| num < 4 } # => true
 
   # Returns all elements of the array into a new, one-dimensional array
   def my_flatten
