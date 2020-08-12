@@ -1,8 +1,8 @@
 require_relative 'Player.rb'
 
 class Game
-  attr_reader :current_player, :previous_player
   DICTIONARY = "./dictionary.txt"
+  attr_reader :current_player, :previous_player
 
   # Creates a new Game instance
   def initialize(name_1, name_2)
