@@ -19,6 +19,9 @@ class Game
     # alphabet and each value an array of words that start with that letter
     @dictionary = Hash.new { |h, k| h[k] = [] }
     lines.each { |word| @dictionary[word[0]] << word }
+
+    # Hash to keep track of the times a player looses
+    @losses = Hash.new(0)
   end
 
   # Updates @current_player and @previous_player
@@ -40,6 +43,11 @@ class Game
     @dictionary[new_fragment[0]].any? { |word| word[0...new_fragment.length] == new_fragment }
   end
 
+  # Translates a player's losses into a substring of "GHOST"
+  def record(player)
+    "GHOST"[0...@losses[player]]
+  end
+
   # Gets a string from the player until a valid play is made; then updates the
   # fragment and checks against the dictionary
   def take_turn(player)
@@ -47,7 +55,10 @@ class Game
     loop do
       str = player.guess
       valid = valid_play?(str)
-      player.alert_invalid_guess if !valid
+      if !valid
+        puts "Invalid guess! Try again..."
+        puts "Current fragment: #{@fragment}"
+      end
       break if valid
     end
     @fragment += str
@@ -60,7 +71,26 @@ class Game
     while take_turn(@current_player)
       self.next_player!
     end
+    @losses[@current_player] += 1
     puts "Player #{@current_player.name} loses!"
+    @fragment = ""
+  end
+
+  # Shows the scoreboard after each round
+  def display_standings
+    print "\n"
+    puts "Player #{@player_1.name} record: #{self.record(@player_1)}"
+    puts "Player #{@player_2.name} record: #{self.record(@player_2)}"
+  end
+
+  # Calls #play_round until one of the players reaches 5 losses
+  def run
+    until @losses[@player_1] == 5 || @losses[@player_2] == 5
+      self.play_round
+      self.display_standings
+    end
+    winner = (@losses[@player_1] == 5)? @player_2.name : @player_1.name
+    puts "Player #{winner} wins the game! =)"
   end
 
 end

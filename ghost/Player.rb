@@ -11,10 +11,4 @@ class Player
     print "\nPlayer #{@name}, guess a letter: "
     str = gets.chomp.downcase
   end
-
-  # Alerts the player about an invalid guess
-  def alert_invalid_guess
-    puts "Invalid guess! Try again..."
-  end
-
 end
