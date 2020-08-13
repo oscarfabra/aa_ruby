@@ -5,11 +5,16 @@ class Game
   attr_reader :current_player, :previous_player
 
   # Creates a new Game instance
-  def initialize(name_1, name_2)
-    @player_1 = Player.new(name_1)
-    @player_2 = Player.new(name_2)
-    @current_player = @player_1
-    @previous_player = @player_2
+  def initialize(*args)
+    raise "There must be at least two players" if args.length < 2
+
+    # Initializes the players array
+    @players = []
+    args.each { |name| @players << Player.new(name) }
+
+    # Sets current and previous players and the current fragment
+    @current_player = @players.first
+    @previous_player = @players.last
     @fragment = ""
 
     # Reads lines from file and removes \n from each element
@@ -21,17 +26,19 @@ class Game
     lines.each { |word| @dictionary[word[0]] << word }
 
     # Hash to keep track of the times a player looses
-    @losses = Hash.new(0)
+    @losses = {}
+    @players.each { |player| @losses[player] = 0 }
   end
 
   # Updates @current_player and @previous_player
   def next_player!
-    if @current_player == @player_1
-      @current_player = @player_2
-      @previous_player = @player_1
-    else
-      @current_player = @player_1
-      @previous_player = @player_2
+    previous_i = @players.index(@current_player)
+    @previous_player = @current_player
+    current_i = (previous_i + 1) % @players.length
+    @current_player = @players[current_i]
+    until @losses[@current_player] != 5
+      current_i = (current_i + 1) % @players.length
+      @current_player = @players[current_i]
     end
   end
 
@@ -74,23 +81,24 @@ class Game
     @losses[@current_player] += 1
     puts "Player #{@current_player.name} loses!"
     @fragment = ""
+    self.next_player!
   end
 
   # Shows the scoreboard after each round
   def display_standings
-    print "\n"
-    puts "Player #{@player_1.name} record: #{self.record(@player_1)}"
-    puts "Player #{@player_2.name} record: #{self.record(@player_2)}"
+    puts "\nStandings:"
+    @players.each do |player|
+      puts "Player #{player.name} record: #{self.record(player)}"
+    end
   end
 
-  # Calls #play_round until one of the players reaches 5 losses
+  # Calls #play_round until only one of the players has less than 5 losses
   def run
-    until @losses[@player_1] == 5 || @losses[@player_2] == 5
+    until @losses.values.one? { |losses| losses != 5 }
       self.play_round
       self.display_standings
     end
-    winner = (@losses[@player_1] == 5)? @player_2.name : @player_1.name
-    puts "Player #{winner} wins the game! =)"
+    winner = @losses.keys.select { |player| @losses[player] != 5 }.first
+    puts "\nPlayer #{winner.name} wins the game! =)"
   end
-
 end
