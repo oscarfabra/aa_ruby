@@ -1,16 +1,21 @@
-require_relative 'Player.rb'
+require_relative 'player.rb'
+require_relative 'ai_player.rb'
 
 class Game
   DICTIONARY = "./dictionary.txt"
   attr_reader :current_player, :previous_player
 
-  # Creates a new Game instance
-  def initialize(*args)
-    raise "There must be at least two players" if args.length < 2
+  # Creates a new Game instance with the given hash. The hash must contain key-
+  # value pairs with name => ai, where ai is a boolean indicating if the
+  # player is an AiPlayer or a normal Player
+  def initialize(hash)
+    raise "There must be at least two players" if hash.length < 2
 
     # Initializes the players array
     @players = []
-    args.each { |name| @players << Player.new(name) }
+    hash.each do |name, ai|
+      (ai)? @players << AiPlayer.new(name) : @players << Player.new(name)
+    end
 
     # Sets current and previous players and the current fragment
     @current_player = @players.first
@@ -25,7 +30,7 @@ class Game
     @dictionary = Hash.new { |h, k| h[k] = [] }
     lines.each { |word| @dictionary[word[0]] << word }
 
-    # Hash to keep track of the times a player looses
+    # Hash to keep track of the times a player loses
     @losses = {}
     @players.each { |player| @losses[player] = 0 }
   end
@@ -59,14 +64,19 @@ class Game
   # fragment and checks against the dictionary
   def take_turn(player)
     str = ""
-    loop do
-      str = player.guess
-      valid = valid_play?(str)
-      if !valid
-        puts "Invalid guess! Try again..."
-        puts "Current fragment: #{@fragment}"
+    if player.is_a?(AiPlayer)
+      moves = self.possible_moves
+      str = player.get_letter(moves[0], moves[1])
+    else
+      loop do
+        str = player.guess
+        valid = valid_play?(str)
+        if !valid
+          puts "Invalid guess! Try again..."
+          puts "Current fragment: #{@fragment}"
+        end
+        break if valid
       end
-      break if valid
     end
     @fragment += str
     puts "Current fragment: #{@fragment}"
@@ -100,5 +110,33 @@ class Game
     end
     winner = @losses.keys.select { |player| @losses[player] != 5 }.first
     puts "\nPlayer #{winner.name} wins the game! =)"
+  end
+
+  # Returns the number of players who haven't reached 5 losses
+  def get_number_of_players
+    @players.count { |player| @losses[player] < 5 }
+  end
+
+  # Returns an array with two subarrays, the winning moves and the losing moves
+  # based on the current fragment and the number of active players
+  def possible_moves
+    # Adds all possible moves to the moves array
+    moves = []
+    ("a".."z").each do |c|
+      new_f = @fragment + c
+      moves << c if @dictionary[new_f[0]].any? { |word| word[0...new_f.length] == new_f }
+    end
+    # Adds all winning moves to winning_moves
+    n = self.get_number_of_players
+    winning_moves = []
+    moves.each do |c|
+      new_f = @fragment + c
+      words = @dictionary[new_f[0]].select { |word| word[0...new_f.length] == new_f }
+      winning_moves << c if words.all? { |word| word != new_f && word.length - @fragment.length <= n }
+    end
+    # Adds all losing moves to losing_moves
+    losing_moves = []
+    losing_moves = moves.reject { |c| winning_moves.include?(c) }
+    [winning_moves, losing_moves]
   end
 end
