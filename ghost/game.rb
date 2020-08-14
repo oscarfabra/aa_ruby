@@ -117,16 +117,18 @@ class Game
     @players.count { |player| @losses[player] < 5 }
   end
 
-  # Returns an array with two subarrays, the winning moves and the losing moves
-  # based on the current fragment and the number of active players
-  def possible_moves
-    # Adds all possible moves to the moves array
+  # Returns all valid moves starting with the current fragment
+  def valid_moves
     moves = []
     ("a".."z").each do |c|
       new_f = @fragment + c
       moves << c if @dictionary[new_f[0]].any? { |word| word[0...new_f.length] == new_f }
     end
-    # Adds all winning moves to winning_moves
+    moves
+  end
+
+  # Returns all winning moves from the given moves array
+  def winning_moves(moves)
     n = self.get_number_of_players
     winning_moves = []
     moves.each do |c|
@@ -134,9 +136,34 @@ class Game
       words = @dictionary[new_f[0]].select { |word| word[0...new_f.length] == new_f }
       winning_moves << c if words.all? { |word| word != new_f && word.length - @fragment.length <= n }
     end
+    winning_moves
+  end
+
+  # Returns all losing moves given the valid moves and winning_moves arrays
+  def losing_moves(moves, winning_moves)
+    moves.reject { |c| winning_moves.include?(c) }
+  end
+
+  # Returns an array with two subarrays, the winning moves and the losing moves
+  # based on the current fragment and the number of active players
+  def possible_moves
+    # Adds all possible moves to the moves array
+    moves = self.valid_moves
+    # Adds all winning moves to winning_moves
+    winning_moves = self.winning_moves(moves)
     # Adds all losing moves to losing_moves
-    losing_moves = []
-    losing_moves = moves.reject { |c| winning_moves.include?(c) }
+    losing_moves = self.losing_moves(moves, winning_moves)
+    # Returns an array with the winning_moves and the losing_moves
     [winning_moves, losing_moves]
   end
+end
+
+# Creates and runs a new Game with one human player and two AI players
+if $PROGRAM_NAME == __FILE__
+  game = Game.new(
+    "A" => false,
+    "B" => true,
+    "C" => true
+  )
+  game.run
 end
